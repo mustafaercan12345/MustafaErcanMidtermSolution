@@ -19,7 +19,13 @@ namespace TuitionPaymentSystem
             MyJwtKey = Guid.NewGuid().ToString();
 
             var builder = WebApplication.CreateBuilder(args);
-
+            builder.Services.AddCors(o =>
+            {
+                o.AddPolicy("pp", b =>
+                {
+                    b.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+                });
+            });
             builder.Services.AddControllers();
 
             builder.Services
@@ -43,6 +49,8 @@ namespace TuitionPaymentSystem
 
             builder.Services.AddSwaggerGen((options =>
             {
+                
+
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement(){
                     {
                         new OpenApiSecurityScheme
@@ -73,7 +81,15 @@ namespace TuitionPaymentSystem
 
             var app = builder.Build();
 
-            app.UseSwagger();
+            app.UseSwagger(c =>
+            {
+                c.PreSerializeFilters.Add((swaggerDoc, httpReq) => swaggerDoc.Servers = new System.Collections.Generic.List<OpenApiServer>
+                {
+                    new OpenApiServer {Url = $"{httpReq.Scheme}://{httpReq.Host.Value}", Description = "Direct!"},
+                    new OpenApiServer {Url = $"{httpReq.Scheme}://localhost:8889", Description = "Gateway!"}
+
+                }); 
+            });
             app.UseSwaggerUI();
 
             app.UseAuthentication();
@@ -84,4 +100,6 @@ namespace TuitionPaymentSystem
             app.Run();
         }
     }
+
+
 }
